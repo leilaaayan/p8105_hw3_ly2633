@@ -1,0 +1,150 @@
+---
+title: "p8105_hw3_ly2633"
+author: "Leila Yan"
+date: "2024-10-06"
+output: html_document
+---
+
+Load libraries
+```{r}
+library(tidyverse)
+library(ggplot2)
+```
+### Problem 1
+
+### Problem 2
+Load, tidy, merge, and otherwise organize the data sets. Your final dataset should include all originally observed variables; exclude participants less than 21 years of age, and those with missing demographic data; and encode data with reasonable variable classes (i.e. not numeric, and using factors with the ordering of tables and plots in mind).
+
+
+
+
+Produce a reader-friendly table for the number of men and women in each education category, and create a visualization of the age distributions for men and women in each education category. Comment on these items.
+
+
+
+Using your tidied dataset, aggregate across minutes to create a total activity variable for each participant. Plot these total activities (y-axis) against age (x-axis); your plot should compare men to women and have separate panels for each education level. Include a trend line or a smooth to illustrate differences. Comment on your plot.
+
+
+Accelerometer data allows the inspection activity over the course of the day. Make a three-panel plot that shows the 24-hour activity time courses for each education level and use color to indicate sex. Describe in words any patterns or conclusions you can make based on this graph; including smooth trends may help identify differences.
+
+
+
+### Problem 3
+Import, clean, and tidy these data, and describe the resulting dataset.
+
+```{r}
+Jan2020_df = 
+  read_csv("citibike/Jan 2020 Citi.csv") %>%
+  janitor::clean_names() %>%
+   mutate(year_month = "Jan2020")
+
+Jan2024_df = 
+  read_csv("citibike/Jan 2024 Citi.csv") %>%
+  janitor::clean_names()%>%
+   mutate(year_month = "Jan2024")
+
+July2020_df = 
+  read_csv("citibike/July 2020 Citi.csv") %>%
+  janitor::clean_names() %>%
+   mutate(year_month = "July2020")
+
+July2024_df = 
+  read_csv("citibike/July 2024 Citi.csv") %>%
+  janitor::clean_names() %>%
+   mutate(year_month = "July2024")
+```
+
+
+Produce a reader-friendly table showing the total number of rides in each combination of year and month separating casual riders and Citi Bike members. Comment on these results.
+```{r}
+all_data =
+  bind_rows(Jan2020_df, Jan2024_df, July2020_df, July2024_df)
+
+
+ride_summary =
+  all_data %>%
+  group_by(year_month, member_casual) %>%
+  summarise(total_rides = n(), .groups = 'drop') %>%
+  pivot_wider(names_from = member_casual, values_from = total_rides, values_fill = 0) %>%
+  rename(Casual_Riders = casual, Citi_Bike_Members = member)
+```
+
+Answers:
+
+
+Make a table showing the 5 most popular starting stations for July 2024; include the number of rides originating from these stations.
+```{r}
+top_stations =
+  July2024_df %>%
+  group_by(start_station_name) %>%
+  summarise(total_rides = n(), .groups = 'drop') %>%
+  arrange(desc(total_rides)) %>%
+  slice_max(total_rides, n = 5)
+```
+
+Answers:
+
+
+Make a plot to investigate the effects of day of the week, month, and year on median ride duration. This plot can include one or more panels, but should facilitate comparison across all variables of interest. Comment on your observations from this plot.
+```{r}
+median_duration_summary =
+  all_data %>%
+  group_by(year_month, weekdays) %>%
+  summarise(median_duration = median(duration, na.rm = TRUE), .groups = 'drop') %>%
+  separate(year_month, into = c("month", "year"), sep = "(?<=[A-Za-z])(?=[0-9])")
+
+median_duration_summary$month =
+  factor(median_duration_summary$month, 
+                                        levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+
+ggplot(median_duration_summary, aes(x = weekdays, y = median_duration, color = month, group = month)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  facet_wrap(~ year) +
+  theme_minimal() +
+  labs(
+    title = "Effects of Day of the Week, Month, and Year on Median Ride Duration",
+    x = "Day of the Week",
+    y = "Median Ride Duration (minutes)",
+    color = "Month"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "bottom")
+```
+Answers:
+
+
+
+
+
+There were relatively few electric Citi Bikes in 2020, but many more are available now. For data in 2024, make a figure that shows the impact of month, membership status, and bike type on the distribution of ride duration. Comment on your results.
+```{r}
+data_2024 =
+  all_data %>%
+  filter(grepl("2024", year_month)) %>%
+  mutate(
+    month = case_when(
+      grepl("Jan", year_month) ~ "January",
+      grepl("July", year_month) ~ "July"
+    )
+  )
+
+ggplot(data_2024, aes(x = month, y = duration, fill = member_casual)) +
+  geom_boxplot(outlier.size = 1, outlier.alpha = 0.5) +
+  facet_wrap(~ rideable_type) +
+  theme_minimal() +
+  labs(
+    title = "Impact of Month, Membership Status, and Bike Type on Ride Duration (2024)",
+    x = "Month",
+    y = "Ride Duration (minutes)",
+    fill = "Membership Status"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "bottom")
+```
+Answers:
+
+
+
+
+
