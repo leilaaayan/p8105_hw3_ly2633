@@ -14,11 +14,44 @@ library(ggplot2)
 
 ### Problem 2
 Load, tidy, merge, and otherwise organize the data sets. Your final dataset should include all originally observed variables; exclude participants less than 21 years of age, and those with missing demographic data; and encode data with reasonable variable classes (i.e. not numeric, and using factors with the ordering of tables and plots in mind).
+```{r}
+accel_df = 
+  read_csv("Data/nhanes_accel.csv") %>%
+  janitor::clean_names()
 
+Covar_df = 
+  read_csv("Data/nhanes_covar.csv", skip=4) %>%
+  janitor::clean_names() 
 
+merged_data =
+  left_join(accel_df, Covar_df, by = "seqn") ### ??? why do I not see demographics variables
+
+cleaned_data =
+  merged_data %>%
+  filter(age >= 21) %>%
+  drop_na() 
+
+# incorrect
+mutate(
+    sex = factor(sex, levels = c("Male", "Female")),  # Encode gender as a factor
+    race = factor(race),  
+    education = factor(education, ordered = TRUE),  # Convert education to an ordered factor, if applicable
+    income = factor(income, ordered = TRUE),  # Convert income to an ordered factor if it's categorical
+    weekdays = factor(weekdays, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"), ordered = TRUE)  
+  )
+```
 
 
 Produce a reader-friendly table for the number of men and women in each education category, and create a visualization of the age distributions for men and women in each education category. Comment on these items.
+
+```{r}
+education_sex_table =
+  cleaned_data %>%
+  group_by(education, sex) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+  mutate(sex = ifelse(sex == 1, "Male", "Female")
+```
+
 
 
 
