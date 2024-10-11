@@ -11,51 +11,79 @@ library(tidyverse)
 library(ggplot2)
 ```
 ### Problem 1
+```{r}
+library(p8105.datasets)
+data("ny_noaa")
+```
+
+
+
+
 
 ### Problem 2
 Load, tidy, merge, and otherwise organize the data sets. Your final dataset should include all originally observed variables; exclude participants less than 21 years of age, and those with missing demographic data; and encode data with reasonable variable classes (i.e. not numeric, and using factors with the ordering of tables and plots in mind).
 ```{r}
 accel_df = 
   read_csv("Data/nhanes_accel.csv") %>%
-  janitor::clean_names()
+  janitor::clean_names()%>%
+  drop_na()
 
 Covar_df = 
   read_csv("Data/nhanes_covar.csv", skip=4) %>%
-  janitor::clean_names() 
-
-merged_data =
-  left_join(accel_df, Covar_df, by = "seqn") ### ??? why do I not see demographics variables
-
-cleaned_data =
-  merged_data %>%
+  janitor::clean_names() %>%
   filter(age >= 21) %>%
-  drop_na() 
+  mutate(education=recode(education, "1" = "Less than high school", "2" = "High school equivalent", "3" = "More than high school"), sex=recode(sex, "1"="Male", "2" = "Female")) %>%
+  drop_na()
 
-# incorrect
-mutate(
-    sex = factor(sex, levels = c("Male", "Female")),  # Encode gender as a factor
-    race = factor(race),  
-    education = factor(education, ordered = TRUE),  # Convert education to an ordered factor, if applicable
-    income = factor(income, ordered = TRUE),  # Convert income to an ordered factor if it's categorical
-    weekdays = factor(weekdays, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"), ordered = TRUE)  
-  )
+merged_data = left_join(Covar_df, accel_df, by="seqn") %>% 
+  relocate("seqn","sex", "age", "bmi", "education") %>%
+  mutate(across(seqn:education, as.character))
+
 ```
 
 
 Produce a reader-friendly table for the number of men and women in each education category, and create a visualization of the age distributions for men and women in each education category. Comment on these items.
 
 ```{r}
-education_sex_table =
-  cleaned_data %>%
+education_sex_table = merged_data %>%
+  mutate(education=recode(education, "1" = "Less than high school", "2" = "High school equivalent", "3" = "More than high school"), sex=recode(sex, "1"="Male", "2" = "Female")) %>%
   group_by(education, sex) %>%
-  summarise(count = n(), .groups = 'drop') %>%
-  mutate(sex = ifelse(sex == 1, "Male", "Female")
+  summarise(count = n(), .groups = 'drop')
+```
+
+```{r}
+barplot = ggplot(merged_data, aes(x = sex, fill = education)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Distribution of Men and Women Across Education Categories",
+       x = "Sex", y = "Count", fill = "Education Level") +
+  theme_minimal()
+
+barplot
 ```
 
 
 
-
 Using your tidied dataset, aggregate across minutes to create a total activity variable for each participant. Plot these total activities (y-axis) against age (x-axis); your plot should compare men to women and have separate panels for each education level. Include a trend line or a smooth to illustrate differences. Comment on your plot.
+```{r}
+total_activity_data <- cleaned_data %>%
+  group_by(seqn, sex, age, education) %>%
+  summarise(total_activity = sum(activity_variable, na.rm = TRUE), .groups = 'drop')  # Replace 'activity_variable' with the actual activity column name
+
+
+ggplot(total_activity_data, aes(x = age, y = total_activity, color = sex)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "loess", se = FALSE) +
+  facet_wrap(~ education) +
+  theme_minimal() +
+  labs(
+    title = "Total Activity vs Age by Education Level",
+    x = "Age",
+    y = "Total Activity",
+    color = "Sex"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "bottom")
+```
 
 
 Accelerometer data allows the inspection activity over the course of the day. Make a three-panel plot that shows the 24-hour activity time courses for each education level and use color to indicate sex. Describe in words any patterns or conclusions you can make based on this graph; including smooth trends may help identify differences.
