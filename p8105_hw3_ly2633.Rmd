@@ -51,6 +51,7 @@ education_sex_table = merged_data %>%
   summarise(count = n(), .groups = 'drop')
 ```
 
+
 ```{r}
 barplot = ggplot(merged_data, aes(x = sex, fill = education)) +
   geom_bar(position = "dodge") +
@@ -61,9 +62,12 @@ barplot = ggplot(merged_data, aes(x = sex, fill = education)) +
 barplot
 ```
 
+Comments:
+The table shows the number of men and women across three different education categories: "Less than high school," "High school equivalent," and "More than high school." Women and men are fairly represented across all education levels, with a slightly higher count of men in the "High school equivalent" and "More than high school" categories. Specifically, men show higher numbers in the "High school equivalent" (35 vs. 23) and "More than high school" (56 vs. 59), whereas the "Less than high school" category is almost balanced (27 men vs. 28 women). The bar plot visualizes the distribution of men and women across these education levels. The plot clearly illustrates that for the "More than high school" category, both men and women have the highest counts, followed by the "High school equivalent" category, with a lower number of participants in the "Less than high school" category. The balance in the "Less than high school" group is striking, while the other two categories show more disparity between men and women.
 
 
 Using your tidied dataset, aggregate across minutes to create a total activity variable for each participant. Plot these total activities (y-axis) against age (x-axis); your plot should compare men to women and have separate panels for each education level. Include a trend line or a smooth to illustrate differences. Comment on your plot.
+
 ```{r}
 total_activity_data <- cleaned_data %>%
   group_by(seqn, sex, age, education) %>%
@@ -128,9 +132,15 @@ ride_summary =
   summarise(total_rides = n(), .groups = 'drop') %>%
   pivot_wider(names_from = member_casual, values_from = total_rides, values_fill = 0) %>%
   rename(Casual_Riders = casual, Citi_Bike_Members = member)
+
+ride_summary
 ```
 
 Answers:
+Casual Riders: In January 2020, there were 984 rides by casual riders, which more than doubled by January 2024 (2,108 rides). A similar trend can be seen for July, with a substantial rise from 5,637 rides in July 2020 to 10,894 rides in July 2024.
+
+Citi Bike Members: The growth in Citi Bike member rides is also notable. In January 2020, there were 11,436 rides, increasing to 16,753 rides in January 2024. The July data shows an even larger jump, from 15,411 rides in July 2020 to 36,262 rides in July 2024.
+
 
 
 Make a table showing the 5 most popular starting stations for July 2024; include the number of rides originating from these stations.
@@ -144,6 +154,7 @@ top_stations =
 ```
 
 Answers:
+The most popular station is Pier 61 at Chelsea Piers with 163 rides, followed by University Pl & E 14 St and W 21 St & 6 Ave with 155 and 152 rides, respectively. This data suggests that these stations are key locations for bike-sharing services, likely reflecting high foot traffic and accessibility in these areas. The slight variations in ride numbers among these stations indicate that multiple points across the city are highly utilized, with no overwhelming dominance by any one station.
 
 
 Make a plot to investigate the effects of day of the week, month, and year on median ride duration. This plot can include one or more panels, but should facilitate comparison across all variables of interest. Comment on your observations from this plot.
@@ -173,7 +184,7 @@ ggplot(median_duration_summary, aes(x = weekdays, y = median_duration, color = m
         legend.position = "bottom")
 ```
 Answers:
-
+The plot shows how median ride duration varies by day of the week, month (comparing January with other months), and year (2020 versus 2024). In 2020, there is a noticeable increase in ride duration on the weekends, with Saturday and Sunday showing the highest median ride times, peaking at around 16 minutes. In contrast, weekdays exhibit lower and more consistent durations, particularly on Fridays and Mondays. By 2024, while the weekend trend persists, the overall ride durations have decreased slightly, especially on Sundays, and the difference in duration between weekdays and weekends is less pronounced. January consistently shows lower median ride durations across both years, with minimal variation across the days of the week, indicating that rides are generally shorter during colder months. This suggests a seasonal pattern, where longer rides are more common in warmer months, particularly on weekends. Additionally, the slight decrease in median ride duration between 2020 and 2024 could reflect changes in riding behavior, such as route preferences, weather, or other external factors.
 
 
 
@@ -204,7 +215,7 @@ ggplot(data_2024, aes(x = month, y = duration, fill = member_casual)) +
         legend.position = "bottom")
 ```
 Answers:
-
+The figure shows that in 2024, casual riders tend to have longer ride durations compared to Citi Bike members, regardless of bike type. Electric bikes, which have become more widely available, exhibit a greater range of ride times, especially for casual riders in July. Ride durations are generally longer in the summer (July) compared to the winter (January), likely due to better weather conditions. Overall, electric bikes are associated with longer rides, and casual riders appear to use Citi Bikes for more leisurely or recreational purposes, especially in warmer months.
 
 
 
