@@ -9,6 +9,7 @@ Load libraries
 ```{r}
 library(tidyverse)
 library(ggplot2)
+library(patchwork)
 ```
 ### Problem 1
 ```{r}
@@ -69,29 +70,48 @@ The table shows the number of men and women across three different education cat
 Using your tidied dataset, aggregate across minutes to create a total activity variable for each participant. Plot these total activities (y-axis) against age (x-axis); your plot should compare men to women and have separate panels for each education level. Include a trend line or a smooth to illustrate differences. Comment on your plot.
 
 ```{r}
-total_activity_data <- cleaned_data %>%
-  group_by(seqn, sex, age, education) %>%
-  summarise(total_activity = sum(activity_variable, na.rm = TRUE), .groups = 'drop')  # Replace 'activity_variable' with the actual activity column name
+# Aggregate the data
+aggregate_df = 
+  merged_data %>%
+  mutate(total_minutes= rowSums(select(., starts_with("min")))) %>%
+  relocate("seqn","sex", "age", "bmi", "education", "total_minutes")
 
+# Plot total activities against age
+scatterplot_aggregate = 
+  aggregate_df %>%
+  mutate(age=as.integer(age)) %>%
+  ggplot(., mapping=aes(x=age, y=total_minutes, color=sex)) + geom_point(na.rm=TRUE, size=1) + theme_light() +
+  ggtitle("Plot for age against total activities") + xlab("age") + ylab("total minutes") +
+  scale_x_continuous(expand=c(0,0), limits=c(0, 100)) +theme(plot.title = element_text(hjust=0.5)) + geom_smooth() +
+  facet_grid(. ~ education)
 
-ggplot(total_activity_data, aes(x = age, y = total_activity, color = sex)) +
-  geom_point(alpha = 0.6) +
-  geom_smooth(method = "loess", se = FALSE) +
-  facet_wrap(~ education) +
-  theme_minimal() +
-  labs(
-    title = "Total Activity vs Age by Education Level",
-    x = "Age",
-    y = "Total Activity",
-    color = "Sex"
-  ) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        legend.position = "bottom")
+scatterplot_aggregate 
 ```
+Comments:
 
 
 Accelerometer data allows the inspection activity over the course of the day. Make a three-panel plot that shows the 24-hour activity time courses for each education level and use color to indicate sex. Describe in words any patterns or conclusions you can make based on this graph; including smooth trends may help identify differences.
+```{r}
+# Get data ready for plotting
+plot_longer = merged_data %>%
+  pivot_longer(., cols= starts_with("min"), names_to = "minutes", values_to = "readings") %>%
+  mutate(minutes = as.numeric(gsub("min", "", minutes)))
 
+final_plot_df = merged_data %>%
+  pivot_longer(., cols = starts_with("min"), names_to = "minutes", values_to = "readings") %>%
+  mutate(minutes = as.numeric(gsub("min", "", minutes))) %>%
+  group_by(minutes, sex, education) %>%
+  summarise(mean=mean(readings, na.rm=TRUE))
+
+# Plot the graph
+scatterplot_24h_activity = ggplot(final_plot_df, mapping=aes(x=minutes, y=mean, color=sex)) + geom_point(size=0.25, rm.NA=TRUE) + theme_light() + facet_grid(.~ education) +
+  geom_smooth(size=0.7) + scale_x_continuous(limits=c(0, 1400), breaks=seq(0, 1400, by=200)) +
+  scale_y_continuous(limits=c(0,18), breaks=seq(0,18, by=3)) + xlab("24-hour activity time courses") + ylab("mean acceleorometers readings per minute") +
+  ggtitle("Scatterplot of 24-hour activity against the mean acceleorometers readings per minute") + theme(legend.position = "bottom", plot.title=element_text(hjust=.5))
+
+scatterplot_24h_activity
+```
+Comments:
 
 
 ### Problem 3
@@ -101,37 +121,38 @@ Import, clean, and tidy these data, and describe the resulting dataset.
 Jan2020_df = 
   read_csv("citibike/Jan 2020 Citi.csv") %>%
   janitor::clean_names() %>%
-   mutate(year_month = "Jan2020")
+   mutate("year" = "2020", "month" = "Jan")
 
 Jan2024_df = 
   read_csv("citibike/Jan 2024 Citi.csv") %>%
   janitor::clean_names()%>%
-   mutate(year_month = "Jan2024")
+   mutate("year" = "2024", "month" = "Jan")
 
 July2020_df = 
   read_csv("citibike/July 2020 Citi.csv") %>%
   janitor::clean_names() %>%
-   mutate(year_month = "July2020")
+   mutate("year" = "2020", "month" = "July")
 
 July2024_df = 
   read_csv("citibike/July 2024 Citi.csv") %>%
   janitor::clean_names() %>%
-   mutate(year_month = "July2024")
+   mutate("year" = "2024", "month" = "July")
 ```
 
 
 Produce a reader-friendly table showing the total number of rides in each combination of year and month separating casual riders and Citi Bike members. Comment on these results.
 ```{r}
 all_data =
-  bind_rows(Jan2020_df, Jan2024_df, July2020_df, July2024_df)
+  bind_rows(Jan2020_df, Jan2024_df, July2020_df, July2024_df) %>%
+  mutate(weekdays = factor(weekdays, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")))
 
 
 ride_summary =
-  all_data %>%
-  group_by(year_month, member_casual) %>%
+  all_data  %>%
+  group_by(year, month, member_casual) %>%
   summarise(total_rides = n(), .groups = 'drop') %>%
   pivot_wider(names_from = member_casual, values_from = total_rides, values_fill = 0) %>%
-  rename(Casual_Riders = casual, Citi_Bike_Members = member)
+  rename(Casual_Riders = casual, Citi_Bike_Members = member) 
 
 ride_summary
 ```
@@ -151,6 +172,7 @@ top_stations =
   summarise(total_rides = n(), .groups = 'drop') %>%
   arrange(desc(total_rides)) %>%
   slice_max(total_rides, n = 5)
+top_stations
 ```
 
 Answers:
@@ -159,32 +181,47 @@ The most popular station is Pier 61 at Chelsea Piers with 163 rides, followed by
 
 Make a plot to investigate the effects of day of the week, month, and year on median ride duration. This plot can include one or more panels, but should facilitate comparison across all variables of interest. Comment on your observations from this plot.
 ```{r}
-median_duration_summary =
-  all_data %>%
-  group_by(year_month, weekdays) %>%
-  summarise(median_duration = median(duration, na.rm = TRUE), .groups = 'drop') %>%
-  separate(year_month, into = c("month", "year"), sep = "(?<=[A-Za-z])(?=[0-9])")
+# calculation the median ride duration
+median_ride_duration_year = all_data %>%
+  group_by(year) %>%
+  summarize(median_duration = median(duration, na.rm=TRUE))
 
-median_duration_summary$month =
-  factor(median_duration_summary$month, 
-                                        levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+median_ride_duration_month = all_data %>%
+  group_by(month) %>%
+  summarize(median_duration = median(duration, na.rm=TRUE))
 
-ggplot(median_duration_summary, aes(x = weekdays, y = median_duration, color = month, group = month)) +
-  geom_line(size = 1) +
-  geom_point(size = 2) +
-  facet_wrap(~ year) +
-  theme_minimal() +
-  labs(
-    title = "Effects of Day of the Week, Month, and Year on Median Ride Duration",
-    x = "Day of the Week",
-    y = "Median Ride Duration (minutes)",
-    color = "Month"
-  ) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        legend.position = "bottom")
+median_ride_duration_weekdays = all_data %>%
+  group_by(weekdays) %>%
+  summarize(median_duration = median(duration, na.rm=TRUE))
+
+median_ride_duration_membership = all_data %>%
+  group_by(member_casual) %>%
+  summarize(median_duration = median(duration, na.rm=TRUE))
+
+median_ride_duration_bike = all_data %>%
+  group_by(rideable_type) %>%
+  summarize(median_duration = median(duration, na.rm=TRUE))
+
+
+# create the plots
+plot_1 = ggplot(median_ride_duration_year, aes(x = year, y = median_duration)) +
+             geom_bar(stat="identity", fill="pink", width=0.75) +
+             xlab("year") + ylab("median duration") + ggtitle("median duration(year)") +
+             theme_light() + theme(plot.title = element_text(hjust=0.5))
+
+plot_2 = ggplot(median_ride_duration_month, aes(x = month, y = median_duration)) +
+             geom_bar(stat="identity", fill="blue", width=0.75) +
+             xlab("month") + ylab("median duration") + ggtitle("median duration(month)") + theme_light() + theme(plot.title = element_text(hjust=0.5))
+
+plot_3 = ggplot(median_ride_duration_weekdays, aes(x = weekdays, y = median_duration)) +
+             geom_bar(stat="identity", fill="purple", width=0.75) +
+             xlab("weekday") + ylab("median duration") + ggtitle("median duration(weekday)") + theme_light() + theme(plot.title = element_text(hjust=0.5))
+
+# final plot
+plot_1 + plot_2 + plot_3
+
 ```
 Answers:
-The plot shows how median ride duration varies by day of the week, month (comparing January with other months), and year (2020 versus 2024). In 2020, there is a noticeable increase in ride duration on the weekends, with Saturday and Sunday showing the highest median ride times, peaking at around 16 minutes. In contrast, weekdays exhibit lower and more consistent durations, particularly on Fridays and Mondays. By 2024, while the weekend trend persists, the overall ride durations have decreased slightly, especially on Sundays, and the difference in duration between weekdays and weekends is less pronounced. January consistently shows lower median ride durations across both years, with minimal variation across the days of the week, indicating that rides are generally shorter during colder months. This suggests a seasonal pattern, where longer rides are more common in warmer months, particularly on weekends. Additionally, the slight decrease in median ride duration between 2020 and 2024 could reflect changes in riding behavior, such as route preferences, weather, or other external factors.
 
 
 
@@ -202,7 +239,7 @@ data_2024 =
   )
 
 ggplot(data_2024, aes(x = month, y = duration, fill = member_casual)) +
-  geom_boxplot(outlier.size = 1, outlier.alpha = 0.5) +
+  geom_violin(outlier.size = 1, outlier.alpha = 0.5) +
   facet_wrap(~ rideable_type) +
   theme_minimal() +
   labs(
@@ -214,7 +251,7 @@ ggplot(data_2024, aes(x = month, y = duration, fill = member_casual)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = "bottom")
 ```
-Answers:
+Answers:#### rewrite this answer!!!
 The figure shows that in 2024, casual riders tend to have longer ride durations compared to Citi Bike members, regardless of bike type. Electric bikes, which have become more widely available, exhibit a greater range of ride times, especially for casual riders in July. Ride durations are generally longer in the summer (July) compared to the winter (January), likely due to better weather conditions. Overall, electric bikes are associated with longer rides, and casual riders appear to use Citi Bikes for more leisurely or recreational purposes, especially in warmer months.
 
 
