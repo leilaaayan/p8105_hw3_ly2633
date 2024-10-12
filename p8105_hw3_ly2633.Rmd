@@ -221,8 +221,8 @@ plot_3 = ggplot(median_ride_duration_weekdays, aes(x = weekdays, y = median_dura
 plot_1 + plot_2 + plot_3
 
 ```
-Answers:
-
+Comments:
+This plot illustrates the effects of year, month, and weekday on median ride duration. Over time, the median ride duration decreased from 2020 to 2024. Comparing months, July shows a longer median duration than January, likely reflecting seasonal factors such as warmer weather or more leisure activities in summer. Across the days of the week, ride durations remain relatively consistent, though weekends (Saturday and Sunday) have slightly longer durations, which may be due to more recreational riding compared to weekdays. These patterns suggest temporal variations in ride behavior.
 
 
 
@@ -251,8 +251,16 @@ ggplot(data_2024, aes(x = month, y = duration, fill = member_casual)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = "bottom")
 ```
-Answers:#### rewrite this answer!!!
-The figure shows that in 2024, casual riders tend to have longer ride durations compared to Citi Bike members, regardless of bike type. Electric bikes, which have become more widely available, exhibit a greater range of ride times, especially for casual riders in July. Ride durations are generally longer in the summer (July) compared to the winter (January), likely due to better weather conditions. Overall, electric bikes are associated with longer rides, and casual riders appear to use Citi Bikes for more leisurely or recreational purposes, especially in warmer months.
+Answers:
+In both January and July, casual users consistently show longer ride durations compared to members, with this difference being particularly pronounced for classic bikes. For electric bikes, the distribution of ride duration remains more similar between casual users and members, though casual riders still tend to have longer rides on average. July shows a wider distribution of ride durations compared to January, suggesting that rides may be longer during warmer months. Overall, the data indicates that casual riders, particularly those using classic bikes, tend to take longer rides, with the distribution slightly more even for electric bikes, likely reflecting the increased convenience and speed of electric rides. These patterns highlight how bike type, membership, and seasonal factors influence ride behavior in 2024.
+
+
+
+
+
+
+
+
 
 
 
