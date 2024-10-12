@@ -17,6 +17,10 @@ library(p8105.datasets)
 data("ny_noaa")
 ```
 
+Do some data cleaning. Create separate variables for year, month, and day. Ensure observations for temperature, precipitation, and snowfall are given in reasonable units. For snowfall, what are the most commonly observed values? Why?
+```{r}
+
+```
 
 
 
@@ -24,6 +28,7 @@ data("ny_noaa")
 ### Problem 2
 Load, tidy, merge, and otherwise organize the data sets. Your final dataset should include all originally observed variables; exclude participants less than 21 years of age, and those with missing demographic data; and encode data with reasonable variable classes (i.e. not numeric, and using factors with the ordering of tables and plots in mind).
 ```{r}
+# load, tidy, merge, organize datasets
 accel_df = 
   read_csv("Data/nhanes_accel.csv") %>%
   janitor::clean_names()%>%
@@ -51,7 +56,6 @@ education_sex_table = merged_data %>%
   group_by(education, sex) %>%
   summarise(count = n(), .groups = 'drop')
 ```
-
 
 ```{r}
 barplot = ggplot(merged_data, aes(x = sex, fill = education)) +
@@ -88,9 +92,12 @@ scatterplot_aggregate =
 scatterplot_aggregate 
 ```
 Comments:
+In all panels, there is noticeable variability in total activities, but the trends show distinct patterns. For participants with a high school equivalent education, both men and women exhibit a peak in total activities around age 25 to 35, followed by a decline, with women generally engaging in more activities than men. Among participants with less than a high school education, the activity levels decline more sharply after age 50, particularly for men. For participants with more than a high school education, men and women show more stable activity levels throughout middle age, though women again tend to have higher activity levels overall. The smooth trend lines indicate that educational attainment and gender interact with age to influence physical activity levels over the lifespan, with women consistently engaging in more total activities across education levels.
+
 
 
 Accelerometer data allows the inspection activity over the course of the day. Make a three-panel plot that shows the 24-hour activity time courses for each education level and use color to indicate sex. Describe in words any patterns or conclusions you can make based on this graph; including smooth trends may help identify differences.
+
 ```{r}
 # Get data ready for plotting
 plot_longer = merged_data %>%
@@ -112,6 +119,7 @@ scatterplot_24h_activity = ggplot(final_plot_df, mapping=aes(x=minutes, y=mean, 
 scatterplot_24h_activity
 ```
 Comments:
+Across all education levels, the general activity pattern follows a similar daily cycle, with low activity during early morning hours, a sharp increase around mid-morning, peak activity in the afternoon, and a gradual decline into the evening. The smooth trend lines suggest that, overall, there are no substantial differences between males and females in terms of the daily activity cycle, although women tend to exhibit slightly higher accelerometer readings during peak activity periods in the "high school equivalent" and "more than high school" groups. This trend indicates that women may engage in slightly more vigorous activities or sustain higher activity levels throughout the day. These observations highlight that daily activity patterns are relatively similar across education levels, but small gender differences exist in overall activity intensity, particularly during peak hours.
 
 
 ### Problem 3
