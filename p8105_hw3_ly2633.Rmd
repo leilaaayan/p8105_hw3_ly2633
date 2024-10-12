@@ -19,10 +19,25 @@ data("ny_noaa")
 
 Do some data cleaning. Create separate variables for year, month, and day. Ensure observations for temperature, precipitation, and snowfall are given in reasonable units. For snowfall, what are the most commonly observed values? Why?
 ```{r}
+ny_noaa_cleaned <- ny_noaa %>%
+  janitor::clean_names()%>%
+  drop_na() %>%
+  mutate(
+    year = year(date),
+    month = month(date),
+    day = day(date),
+    tmax = as.numeric(tmax) / 10,  
+    tmin = as.numeric(tmin) / 10,   
+    prcp = as.numeric(prcp) / 10,   
+    snowfall = as.numeric(snow)    
+  )
 
+common_snowfall <- ny_noaa_cleaned %>%
+  count(snowfall) %>%
+  arrange(desc(n))
+common_snowfall
 ```
-
-
+The most commonly observed snowfall value is 0, with over 1.1 million instances. This is expected because many days in the dataset likely had no snowfall, especially in regions or seasons where snow is uncommon. Other common values, like 25, 13, 51, and 5, likely represent typical snowfall measurements in millimeters during snow events, but they occur much less frequently compared to zero snowfall days. The predominance of zero snowfall values is because, in many locations, snow only occurs seasonally or not at all, leading to many days with no snow recorded throughout the year.
 
 
 ### Problem 2
