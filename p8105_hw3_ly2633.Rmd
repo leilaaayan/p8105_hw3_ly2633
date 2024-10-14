@@ -279,28 +279,16 @@ This plot illustrates the effects of year, month, and weekday on median ride dur
 
 There were relatively few electric Citi Bikes in 2020, but many more are available now. For data in 2024, make a figure that shows the impact of month, membership status, and bike type on the distribution of ride duration. Comment on your results.
 ```{r}
-data_2024 =
-  all_data %>%
-  filter(grepl("2024", year_month)) %>%
-  mutate(
-    month = case_when(
-      grepl("Jan", year_month) ~ "January",
-      grepl("July", year_month) ~ "July"
-    )
-  )
+# Membership status
+membership_df = ggplot(median_duration_membership, aes(x = type, y = median_duration)) +
+             geom_bar(stat="identity", fill="darkgreen", width=0.75) +
+             xlab("Membership Type") + ylab("Median Duration") + ggtitle("Median Duration(Membership Type)") +
+             theme_light() + theme(plot.title = element_text(hjust=0.5))
 
-ggplot(data_2024, aes(x = month, y = duration, fill = member_casual)) +
-  geom_violin(outlier.size = 1, outlier.alpha = 0.5) +
-  facet_wrap(~ rideable_type) +
-  theme_minimal() +
-  labs(
-    title = "Impact of Month, Membership Status, and Bike Type on Ride Duration (2024)",
-    x = "Month",
-    y = "Ride Duration (minutes)",
-    fill = "Membership Status"
-  ) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        legend.position = "bottom")
+# Bike type
+
+# creating the plots
+
 ```
 Answers:
 In both January and July, casual users consistently show longer ride durations compared to members, with this difference being particularly pronounced for classic bikes. For electric bikes, the distribution of ride duration remains more similar between casual users and members, though casual riders still tend to have longer rides on average. July shows a wider distribution of ride durations compared to January, suggesting that rides may be longer during warmer months. Overall, the data indicates that casual riders, particularly those using classic bikes, tend to take longer rides, with the distribution slightly more even for electric bikes, likely reflecting the increased convenience and speed of electric rides. These patterns highlight how bike type, membership, and seasonal factors influence ride behavior in 2024.
